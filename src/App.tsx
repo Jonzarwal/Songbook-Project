@@ -19,7 +19,7 @@ function App() {
 
   return (
     <div>
-      <h1>🎸 Songbook</h1>
+      <h1>🎸 Songbouuuuuk </h1>
 
       {loading ? <p>Chargement...</p> : <SongList songs={songs} />}
     </div>
