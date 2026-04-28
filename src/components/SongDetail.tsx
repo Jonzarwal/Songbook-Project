@@ -8,14 +8,15 @@ interface Props {
 
 function getYouTubeId(url: string): string | null {
   if (!url) return null;
+
   const match = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
   );
   return match ? match[1] : null;
 }
 
 export default function SongDetail({ song, onBack }: Props) {
-  const ytId = song.youtube_url ? getYouTubeId(song.youtube_url) : null;
+  const ytId = song.yt_url ? getYouTubeId(song.yt_url) : null;
   const thumbUrl = ytId
     ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
     : null;
@@ -34,7 +35,7 @@ export default function SongDetail({ song, onBack }: Props) {
 
       {thumbUrl ? (
         <a
-          href={song.youtube_url}
+          href={song.yt_url}
           target="_blank"
           rel="noopener noreferrer"
           className="detail-thumb"
@@ -63,7 +64,10 @@ export default function SongDetail({ song, onBack }: Props) {
           <div className="detail-section__label">Lyrics</div>
           <div className="detail-lyrics">
             {song.lyrics.split("\n").map((line, i) => (
-              <p key={i} className={line.trim() === "" ? "lyric-spacer" : "lyric-line"}>
+              <p
+                key={i}
+                className={line.trim() === "" ? "lyric-spacer" : "lyric-line"}
+              >
                 {line || "\u00A0"}
               </p>
             ))}

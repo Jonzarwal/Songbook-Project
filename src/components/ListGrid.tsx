@@ -15,8 +15,14 @@ export default function ListGrid({ lists, onSelectList }: Props) {
   return (
     <div className="listgrid-root">
       <div className="listgrid-header">
-        <h1 className="listgrid-title">My<br />Songbook</h1>
-        <p className="listgrid-sub">{lists.length} playlist{lists.length !== 1 ? "s" : ""}</p>
+        <h1 className="listgrid-title">
+          The G.O.A.T
+          <br />
+          Songbook
+        </h1>
+        <p className="listgrid-sub">
+          {lists.length} playlist{lists.length !== 1 ? "s" : ""}
+        </p>
       </div>
 
       <div className="listgrid-grid">
@@ -27,7 +33,10 @@ export default function ListGrid({ lists, onSelectList }: Props) {
           tabIndex={0}
           onKeyDown={(e) => e.key === "Enter" && onSelectList(null)}
         >
-          <div className="list-card__accent" style={{ background: "#c9a84c" }} />
+          <div
+            className="list-card__accent"
+            style={{ background: "#c9a84c" }}
+          />
           <div className="list-card__body">
             <span className="list-card__icon">★</span>
             <div>
@@ -49,9 +58,14 @@ export default function ListGrid({ lists, onSelectList }: Props) {
               onKeyDown={(e) => e.key === "Enter" && onSelectList(list)}
               style={{ "--accent": accent } as React.CSSProperties}
             >
-              <div className="list-card__accent" style={{ background: accent }} />
+              <div
+                className="list-card__accent"
+                style={{ background: accent }}
+              />
               <div className="list-card__body">
-                <span className="list-card__icon" style={{ color: accent }}>♪</span>
+                <span className="list-card__icon" style={{ color: accent }}>
+                  ♪
+                </span>
                 <div>
                   <div className="list-card__name">{list.name}</div>
                   {list.description && (
