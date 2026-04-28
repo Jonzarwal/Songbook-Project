@@ -14,3 +14,25 @@ export async function getSongs(): Promise<Song[]> {
 
   return data ?? [];
 }
+
+export async function getSongsByList(listId: number): Promise<Song[]> {
+  const { data, error } = await supabase
+    .from("list_songs")
+    .select(
+      `
+      position,
+      songs (*)
+    `,
+    )
+    .eq("list_id", listId)
+    .order("position", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  if (!data) return [];
+
+  return data.map((item: any) => item.songs as Song);
+}
