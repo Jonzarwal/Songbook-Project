@@ -1,12 +1,10 @@
 import type { List } from "../types/list";
-import { Button } from "primereact/button";
 
 interface Props {
   lists: List[];
   onSelectList: (list: List | null) => void;
 }
 
-// Palette de couleurs pour les listes sans couleur définie
 const FALLBACK_COLORS = ["#c9a84c", "#5a8a6a", "#6a5a8a", "#8a5a5a", "#5a6a8a"];
 
 function getAccent(list: List, index: number): string {
@@ -16,16 +14,12 @@ function getAccent(list: List, index: number): string {
 export default function ListGrid({ lists, onSelectList }: Props) {
   return (
     <div className="listgrid-root">
-      {/* Header */}
       <div className="listgrid-header">
         <h1 className="listgrid-title">My<br />Songbook</h1>
         <p className="listgrid-sub">{lists.length} playlist{lists.length !== 1 ? "s" : ""}</p>
       </div>
 
-      {/* Grid */}
       <div className="listgrid-grid">
-
-        {/* Carte "All" épinglée */}
         <div
           className="list-card list-card--all"
           onClick={() => onSelectList(null)}
@@ -43,7 +37,6 @@ export default function ListGrid({ lists, onSelectList }: Props) {
           </div>
         </div>
 
-        {/* Cartes des playlists */}
         {lists.map((list, i) => {
           const accent = getAccent(list, i);
           return (

@@ -19,6 +19,67 @@ body {
   max-width: 680px;
   margin: 0 auto;
   min-height: 100dvh;
+  overflow: hidden; /* indispensable pour masquer les panneaux hors champ */
+}
+
+/* ============================================================
+   TRANSITIONS — Slide horizontal
+   Principe : .slide-container est un flex row.
+   - Au repos   : un seul .slide-pane, pas de transform
+   - En transit : deux panneaux (--out + --in) dans le flex,
+     le container translate pour masquer le sortant
+   ============================================================ */
+
+.slide-container {
+  display: flex;
+  width: 100%;
+  min-height: 100dvh;
+  /* Pas de transition au repos */
+}
+
+/* Chaque panneau occupe exactement la largeur du viewport */
+.slide-pane {
+  flex: 0 0 100%;
+  width: 100%;
+  min-height: 100dvh;
+  overflow-y: auto;
+}
+
+/* --- Aller en avant (lists → songs → detail) ---
+   Le container part de 0 (panneau sortant visible)
+   et glisse vers -100% (panneau entrant visible) */
+.slide-container.slide-forward {
+  animation: slideForward 320ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideForward {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* --- Retour en arrière (detail → songs → lists) ---
+   Le container démarre décalé à droite (-100%, montrant l'entrant)
+   et revient à 0. On inverse l'ordre : --in est d'abord, --out ensuite */
+.slide-container.slide-back {
+  animation: slideBack 320ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideBack {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+/* En mode retour, l'écran entrant (le précédent) doit être à gauche */
+.slide-container.slide-back .slide-pane--in {
+  order: -1;
+}
+
+/* Respect de la préférence système "réduire les animations" */
+@media (prefers-reduced-motion: reduce) {
+  .slide-container.slide-forward,
+  .slide-container.slide-back {
+    animation: none;
+  }
 }
 
 /* ---------- Shared ---------- */
@@ -174,13 +235,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  padding: 0.875rem 0;
+  padding: 0.875rem 0.5rem;
   border-bottom: 0.5px solid #1a1a1a;
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 8px;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
 }
 
 .song-row:hover {
@@ -244,7 +303,6 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Miniature YouTube */
 .detail-thumb {
   display: block;
   position: relative;
@@ -301,7 +359,6 @@ body {
   cursor: default;
 }
 
-/* Titre & artiste */
 .detail-meta {
   margin-bottom: 1.75rem;
 }
@@ -323,7 +380,6 @@ body {
   color: #c9a84c;
 }
 
-/* Sections lyrics / notes */
 .detail-section {
   margin-bottom: 2rem;
 }

@@ -6,7 +6,6 @@ interface Props {
   onBack: () => void;
 }
 
-// Extrait l'ID YouTube depuis une URL
 function getYouTubeId(url: string): string | null {
   if (!url) return null;
   const match = url.match(
@@ -16,14 +15,13 @@ function getYouTubeId(url: string): string | null {
 }
 
 export default function SongDetail({ song, onBack }: Props) {
-  const ytId = song.yt_url ? getYouTubeId(song.yt_url) : null;
+  const ytId = song.youtube_url ? getYouTubeId(song.youtube_url) : null;
   const thumbUrl = ytId
     ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
     : null;
 
   return (
     <div className="detail-root">
-      {/* Header */}
       <div className="detail-header">
         <Button
           icon="pi pi-arrow-left"
@@ -34,10 +32,9 @@ export default function SongDetail({ song, onBack }: Props) {
         />
       </div>
 
-      {/* Miniature YouTube */}
       {thumbUrl ? (
         <a
-          href={song.yt_url}
+          href={song.youtube_url}
           target="_blank"
           rel="noopener noreferrer"
           className="detail-thumb"
@@ -56,13 +53,11 @@ export default function SongDetail({ song, onBack }: Props) {
         </div>
       )}
 
-      {/* Titre + artiste */}
       <div className="detail-meta">
         <h2 className="detail-title">{song.title}</h2>
         {song.artist && <p className="detail-artist">{song.artist}</p>}
       </div>
 
-      {/* Lyrics */}
       {song.lyrics && (
         <div className="detail-section">
           <div className="detail-section__label">Lyrics</div>
@@ -76,7 +71,6 @@ export default function SongDetail({ song, onBack }: Props) {
         </div>
       )}
 
-      {/* Notes */}
       {song.notes && (
         <div className="detail-section">
           <div className="detail-section__label">Notes</div>
