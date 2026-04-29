@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { List } from "../types/list";
+import type { List } from "../shared/types";
 
 export async function getLists(): Promise<List[]> {
   const { data, error } = await supabase.from("lists").select("*");
