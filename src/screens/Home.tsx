@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getLists } from "../services/lists";
@@ -7,18 +7,26 @@ import {
   BaseCard,
   ScreenRoot,
   AccentBar,
+  LongPressBar,
+  EditBadge,
   tokens,
   neonColor,
 } from "../shared/styles";
 
-/* ── Styles ─────────────────────────────────────────────── */
+/* ── Props ───────────────────────────────────────────────── */
+interface Props {
+  editMode: boolean;
+  setEditMode: (v: boolean) => void;
+}
 
+/* ── Styles ─────────────────────────────────────────────── */
 const Root = styled(ScreenRoot)`
   padding-top: 2.5rem;
 `;
 
 const Header = styled.div`
   margin-bottom: 2.5rem;
+  user-select: none;
 `;
 
 const Title = styled.h1`
@@ -28,6 +36,7 @@ const Title = styled.h1`
   line-height: 1.02;
   letter-spacing: -1.5px;
   color: ${tokens.text};
+  cursor: pointer;
 
   span {
     color: ${tokens.gold};
@@ -51,7 +60,11 @@ const Grid = styled.div`
   gap: 0.75rem;
 `;
 
-const ListCard = styled(BaseCard)<{ $accent: string; $isAll?: boolean }>`
+const ListCard = styled(BaseCard)<{
+  $accent: string;
+  $isAll?: boolean;
+  $isOrphan?: boolean;
+}>`
   && {
     border-color: ${({ $accent }) => $accent}22;
 
@@ -64,6 +77,12 @@ const ListCard = styled(BaseCard)<{ $accent: string; $isAll?: boolean }>`
       $isAll &&
       `
       background: linear-gradient(135deg, #c9a84c0a, #c9a84c05);
+    `}
+
+    ${({ $isOrphan }) =>
+      $isOrphan &&
+      `
+      background: linear-gradient(135deg, #ff3c3c0a, #ff3c3c05);
     `}
   }
 `;
@@ -96,33 +115,82 @@ const CardDesc = styled.div`
   color: ${tokens.textDim};
 `;
 
-/* ── Helpers ─────────────────────────────────────────────── */
+const EditHint = styled.p`
+  margin-top: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: ${tokens.gold}88;
+  text-align: center;
+`;
 
+/* ── Helpers ─────────────────────────────────────────────── */
 const FALLBACK_COLORS = ["#c9a84c", "#5a8a6a", "#6a5a8a", "#8a5a5a", "#5a6a8a"];
 const getAccent = (list: List, i: number) =>
   list.color || FALLBACK_COLORS[i % FALLBACK_COLORS.length];
 
-/* ── Component ───────────────────────────────────────────── */
+const LONG_PRESS_MS = 1000;
 
-export default function Home() {
+/* ── Component ───────────────────────────────────────────── */
+export default function Home({ editMode, setEditMode }: Props) {
   const [lists, setLists] = useState<List[]>([]);
+  const [pressing, setPressing] = useState(false);
   const navigate = useNavigate();
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getLists().then(setLists);
   }, []);
 
+  // Nettoyage timer si le composant est démonté pendant un appui
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  const startPress = useCallback(() => {
+    setPressing(true);
+    timerRef.current = setTimeout(() => {
+      setPressing(false);
+      setEditMode(!editMode);
+    }, LONG_PRESS_MS);
+  }, [editMode, setEditMode]);
+
+  const cancelPress = useCallback(() => {
+    setPressing(false);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   return (
     <Root>
+      {/* Barre de progression appui long */}
+      <LongPressBar $active={pressing} $duration={LONG_PRESS_MS} />
+
+      {/* Badge mode édition */}
+      {editMode && <EditBadge>✎ édition</EditBadge>}
+
       <Header>
-        <Title>
-          My
+        <Title
+          onMouseDown={startPress}
+          onMouseUp={cancelPress}
+          onMouseLeave={cancelPress}
+          onTouchStart={startPress}
+          onTouchEnd={cancelPress}
+        >
+          My2
           <br />
           <span>Songbook</span>
         </Title>
         <Sub>
           {lists.length} playlist{lists.length !== 1 ? "s" : ""}
         </Sub>
+        {!editMode && <EditHint>maintenir le titre pour éditer</EditHint>}
       </Header>
 
       <Grid>
@@ -144,6 +212,25 @@ export default function Home() {
           </CardBody>
         </ListCard>
 
+        {/* Orphelins */}
+        <ListCard
+          $accent={tokens.red}
+          $isOrphan
+          onClick={() => navigate("/orphans")}
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && navigate("/orphans")}
+        >
+          <AccentBar $color={tokens.red} />
+          <CardBody>
+            <Icon $color={tokens.red}>⚠</Icon>
+            <div>
+              <CardName>Sans playlist</CardName>
+              <CardDesc>Songs dans aucune liste</CardDesc>
+            </div>
+          </CardBody>
+        </ListCard>
+
+        {/* Playlists */}
         {lists.map((list, i) => {
           const accent = getAccent(list, i);
           return (

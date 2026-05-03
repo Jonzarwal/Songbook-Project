@@ -192,10 +192,16 @@ export default function SongScreen() {
         <SongTitle>{song.title}</SongTitle>
         {song.artist && <Artist>{song.artist}</Artist>}
       </Meta>
-
+      {song.notes && (
+        <Section>
+          <Label>Notes</Label>
+          <Notes>{song.notes}</Notes>
+        </Section>
+      )}
       {song.lyrics && (
         <Section>
           <Label>Lyrics</Label>
+
           <Lyrics>
             {song.lyrics
               .split("\n")
@@ -207,13 +213,6 @@ export default function SongScreen() {
                 ),
               )}
           </Lyrics>
-        </Section>
-      )}
-
-      {song.notes && (
-        <Section>
-          <Label>Notes</Label>
-          <Notes>{song.notes}</Notes>
         </Section>
       )}
     </ScreenRoot>

@@ -1,4 +1,4 @@
-import styled, { createGlobalStyle, css } from "styled-components";
+import styled, { createGlobalStyle, css, keyframes } from "styled-components";
 import { Card } from "primereact/card";
 
 /* ============================================================
@@ -6,7 +6,7 @@ import { Card } from "primereact/card";
    ============================================================ */
 export const tokens = {
   bg: "#0a0a0a",
-  bgCard: "#1f1f1f",
+  bgCard: "#111111",
   bgHover: "#161616",
   border: "#1e1e1e",
   borderHover: "#2e2e2e",
@@ -17,6 +17,7 @@ export const tokens = {
   goldGlow: "rgba(201,168,76,0.35)",
   goldFaint: "rgba(201,168,76,0.08)",
   red: "#ff3c3c",
+  redGlow: "rgba(255,60,60,0.35)",
   mono: "'DM Mono', monospace",
   serif: "'Playfair Display', serif",
 };
@@ -44,6 +45,12 @@ export const neonColor = (hex: string) => css`
     inset 0 0 6px ${hex}11;
 `;
 
+export const neonRed = css`
+  box-shadow:
+    0 0 6px ${tokens.redGlow},
+    0 0 18px ${tokens.redGlow};
+`;
+
 /* ============================================================
    GLOBAL STYLES
    ============================================================ */
@@ -69,58 +76,7 @@ export const GlobalStyle = createGlobalStyle`
 `;
 
 /* ============================================================
-   SLIDE TRANSITION
-   ============================================================ */
-export const SlideContainer = styled.div<{
-  $sliding: boolean;
-  $direction: "forward" | "back";
-}>`
-  display: flex;
-  width: 100%;
-  min-height: 100dvh;
-  ${({ $sliding, $direction }) =>
-    $sliding &&
-    css`
-      animation: ${$direction === "forward" ? "slideForward" : "slideBack"}
-        320ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    `}
-
-  @keyframes slideForward {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-100%);
-    }
-  }
-  @keyframes slideBack {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none !important;
-  }
-`;
-
-export const SlidePane = styled.div<{ $isOut?: boolean; $isBack?: boolean }>`
-  flex: 0 0 100%;
-  width: 100%;
-  min-height: 100dvh;
-  overflow-y: auto;
-  ${({ $isBack }) =>
-    $isBack &&
-    css`
-      order: -1;
-    `}
-`;
-
-/* ============================================================
-   BASE CARD  (ListCard et SongCard en héritent)
+   BASE CARD
    ============================================================ */
 export const BaseCard = styled(Card)`
   && {
@@ -194,4 +150,168 @@ export const AccentBar = styled.div<{ $color: string }>`
   height: 3px;
   width: 100%;
   background: ${({ $color }) => $color};
+`;
+
+/* ============================================================
+   EDIT MODE — appui long
+   ============================================================ */
+
+// Animation de la barre de progression pendant l'appui long
+const fillProgress = keyframes`
+  from { width: 0%; }
+  to   { width: 100%; }
+`;
+
+export const LongPressBar = styled.div<{ $active: boolean; $duration: number }>`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: ${tokens.border};
+  z-index: 100;
+  opacity: ${({ $active }) => ($active ? 1 : 0)};
+  transition: opacity 0.15s;
+
+  &::after {
+    content: "";
+    display: block;
+    height: 100%;
+    background: ${tokens.gold};
+    box-shadow:
+      0 0 8px ${tokens.goldGlow},
+      0 0 20px ${tokens.goldGlow};
+    width: 0%;
+    animation: ${({ $active, $duration }) =>
+      $active
+        ? css`
+            ${fillProgress} ${$duration}ms linear forwards
+          `
+        : "none"};
+  }
+`;
+
+export const EditBadge = styled.div`
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  background: ${tokens.bgCard};
+  border: 1px solid ${tokens.gold}66;
+  border-radius: 20px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: ${tokens.gold};
+  ${neonGold}
+  z-index: 99;
+  pointer-events: none;
+`;
+
+/* ============================================================
+   DRAG & DROP
+   ============================================================ */
+export const DragHandle = styled.div`
+  color: ${tokens.textFaint};
+  font-size: 0.85rem;
+  cursor: grab;
+  padding: 0 0.25rem;
+  flex-shrink: 0;
+  touch-action: none;
+  transition: color 0.15s;
+
+  &:active {
+    cursor: grabbing;
+  }
+  &:hover {
+    color: ${tokens.gold};
+  }
+`;
+
+export const DraggingCard = styled.div`
+  background: ${tokens.bgCard};
+  border: 1px solid ${tokens.gold}66;
+  border-radius: 10px;
+  opacity: 0.95;
+  ${neonGold}
+`;
+
+/* ============================================================
+   REMOVE BUTTON (retirer song d'une liste)
+   ============================================================ */
+export const RemoveButton = styled.button`
+  background: none;
+  border: none;
+  color: ${tokens.textFaint};
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition:
+    color 0.15s,
+    box-shadow 0.15s;
+  line-height: 1;
+
+  &:hover {
+    color: ${tokens.red};
+    ${neonRed}
+  }
+`;
+
+/* ============================================================
+   ADD SONGS DIALOG
+   ============================================================ */
+export const SongPickerRow = styled.div<{
+  $checked: boolean;
+  $disabled: boolean;
+}>`
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 0.5px solid ${tokens.border};
+  cursor: ${({ $disabled }) => ($disabled ? "default" : "pointer")};
+  opacity: ${({ $disabled }) => ($disabled ? 0.4 : 1)};
+  border-radius: 6px;
+  transition: background 0.15s;
+
+  ${({ $checked, $disabled }) =>
+    $checked &&
+    !$disabled &&
+    css`
+      background: ${tokens.goldFaint};
+    `}
+
+  &:hover {
+    ${({ $disabled }) =>
+      !$disabled &&
+      css`
+        background: ${tokens.bgHover};
+      `}
+  }
+`;
+
+export const CheckIcon = styled.div<{ $checked: boolean }>`
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid
+    ${({ $checked }) => ($checked ? tokens.gold : tokens.textFaint)};
+  background: ${({ $checked }) => ($checked ? tokens.gold : "transparent")};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  ${({ $checked }) =>
+    $checked &&
+    css`
+      ${neonGold}
+    `}
+
+  .pi {
+    font-size: 0.6rem !important;
+    color: ${tokens.bg};
+  }
 `;
