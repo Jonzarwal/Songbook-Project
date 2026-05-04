@@ -138,7 +138,8 @@ const CardInner = styled.div`
 `;
 
 const Num = styled.span`
-  font-size: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: bold;
   color: ${tokens.textFaint};
   min-width: 1.6rem;
   flex-shrink: 0;
@@ -151,7 +152,7 @@ const Info = styled.div`
 `;
 
 const SongTitle = styled.div`
-  font-size: 0.9rem;
+  font-size: 1.5;
   color: ${tokens.text};
   white-space: nowrap;
   overflow: hidden;
@@ -202,6 +203,26 @@ const Center = styled.div`
 `;
 
 /* Dialog styles */
+const StyledDialog = styled(Dialog)`
+  .p-dialog-header {
+    background: #1a1a1a;
+    border-bottom: 0.5px solid ${tokens.border};
+    color: ${tokens.text};
+    font-family: ${tokens.mono};
+  }
+
+  .p-dialog-content {
+    background: #1a1a1a;
+    padding: 0.5rem 1.25rem;
+  }
+
+  .p-dialog-footer {
+    background: #1a1a1a;
+    border-top: 0.5px solid ${tokens.border};
+    padding: 0.75rem 1.25rem;
+  }
+`;
+
 const DialogList = styled.ul`
   list-style: none;
   max-height: 60vh;
@@ -487,7 +508,7 @@ export default function ListScreen({ editMode }: Props) {
       )}
 
       {/* Dialog picker */}
-      <Dialog
+      <StyledDialog
         visible={pickerOpen}
         onHide={() => setPickerOpen(false)}
         header="Ajouter des songs"
@@ -524,7 +545,7 @@ export default function ListScreen({ editMode }: Props) {
             );
           })}
         </DialogList>
-      </Dialog>
+      </StyledDialog>
     </ScreenRoot>
   );
 }

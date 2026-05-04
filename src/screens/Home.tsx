@@ -183,14 +183,14 @@ export default function Home({ editMode, setEditMode }: Props) {
           onTouchStart={startPress}
           onTouchEnd={cancelPress}
         >
-          My2
+          Girl Outlaws And Troubadours
           <br />
           <span>Songbook</span>
         </Title>
         <Sub>
           {lists.length} playlist{lists.length !== 1 ? "s" : ""}
         </Sub>
-        {!editMode && <EditHint>maintenir le titre pour éditer</EditHint>}
+        {!editMode && <EditHint>-</EditHint>}
       </Header>
 
       <Grid>
