@@ -40,8 +40,8 @@ import {
   SongPickerRow,
   CheckIcon,
   tokens,
-  neonColor,
 } from "../shared/styles";
+import { exportPlaylistToPdf } from "../services/pdf";
 
 /* ── Props ───────────────────────────────────────────────── */
 interface Props {
@@ -98,7 +98,27 @@ const AddButton = styled.button`
       0 0 24px ${tokens.goldGlow};
   }
 `;
+const ExportButton = styled.button`
+  background: none;
+  border: 1px solid ${tokens.border};
+  color: ${tokens.textDim};
+  font-family: ${tokens.mono};
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+  white-space: nowrap;
+  margin-top: 0.25rem;
 
+  &:hover {
+    border-color: ${tokens.textDim};
+    color: ${tokens.text};
+  }
+`;
 const SongList = styled.ul`
   list-style: none;
   display: flex;
@@ -106,26 +126,27 @@ const SongList = styled.ul`
   gap: 0.5rem;
 `;
 
-const SongCard = styled(BaseCard)<{ $accent?: string; $isDragging?: boolean }>`
+const SongCard = styled(BaseCard)<{
+  $accent?: string;
+  $songColor?: string;
+  $isDragging?: boolean;
+}>`
   && {
     border-radius: 10px;
-    ${({ $isDragging }) =>
-      $isDragging &&
-      `
-      opacity: 0.95;
-      box-shadow:
-        0 0 6px rgba(201,168,76,0.35),
-        0 0 18px rgba(201,168,76,0.35);
-      border-color: #c9a84c66;
-    `}
+    background: ${({ $songColor }) =>
+      $songColor ? colorWithOpacity($songColor, 0.2) : tokens.bgCard};
+    border-color: ${({ $songColor }) =>
+      $songColor ? colorWithOpacity($songColor, 0.6) : tokens.border};
 
-    &:hover {
-      ${({ $accent }) =>
-        $accent
-          ? neonColor($accent)
-          : `box-shadow: 0 0 12px rgba(255,255,255,0.04);`}
-      border-color: ${({ $accent }) =>
-        $accent ? `${$accent}66` : tokens.borderHover};
+    &&:hover {
+      background: ${({ $songColor }) =>
+        $songColor ? colorWithOpacity($songColor, 0.2) : tokens.bgHover};
+      border-color: ${({ $songColor }) =>
+        $songColor ? colorWithOpacity($songColor, 0.8) : tokens.borderHover};
+      box-shadow: ${({ $songColor }) =>
+        $songColor
+          ? `0 0 12px ${colorWithOpacity($songColor, 0.3)}, 0 0 28px ${colorWithOpacity($songColor, 0.15)}`
+          : `0 0 12px rgba(255,255,255,0.04)`};
     }
   }
 `;
@@ -133,26 +154,29 @@ const SongCard = styled(BaseCard)<{ $accent?: string; $isDragging?: boolean }>`
 const CardInner = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.875rem 1rem;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
+  /* border: 1px solid yellow; */
 `;
 
 const Num = styled.span`
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: bold;
-  color: ${tokens.textFaint};
+  color: ${tokens.textDim};
   min-width: 1.6rem;
   flex-shrink: 0;
+  /* border: 1px solid blue; */
 `;
 
 const Info = styled.div`
   flex: 1;
   min-width: 0;
   cursor: pointer;
+  /* border: 1px solid red; */
 `;
 
 const SongTitle = styled.div`
-  font-size: 1.5;
+  font-size: 1.2rem;
   color: ${tokens.text};
   white-space: nowrap;
   overflow: hidden;
@@ -161,7 +185,7 @@ const SongTitle = styled.div`
 
 const Artist = styled.div`
   margin-top: 0.2rem;
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   color: ${tokens.textDim};
 `;
 
@@ -172,16 +196,7 @@ const ListNotes = styled.div`
   flex-shrink: 0;
   max-width: 120px;
   text-align: right;
-`;
-
-const ColorDot = styled.div<{ $color: string }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 4px;
-  background: ${({ $color }) => $color};
-  box-shadow: 0 0 6px ${({ $color }) => $color}88;
-  flex-shrink: 0;
-  align-self: center;
+  /* border: 1px solid green; */
 `;
 
 const Chevron = styled.i`
@@ -307,10 +322,14 @@ function SortableItem({
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
+  // console.log(song);
   return (
     <li ref={setNodeRef} style={style}>
-      <SongCard $accent={accent} $isDragging={isDragging}>
+      <SongCard
+        $accent={accent}
+        $songColor={song.color}
+        $isDragging={isDragging}
+      >
         {accent && <AccentBar $color={accent} />}
         <CardInner>
           {editMode && (
@@ -325,7 +344,7 @@ function SortableItem({
           </Info>
           {song.notes && <ListNotes>{song.notes}</ListNotes>}
 
-          {song.color && <ColorDot $color={song.color} />}
+          {/* {song.color && <ColorDot $color={song.color} />} */}
           {editMode ? (
             <RemoveButton onClick={() => onRemove(song.id)}>✕</RemoveButton>
           ) : (
@@ -335,6 +354,16 @@ function SortableItem({
       </SongCard>
     </li>
   );
+}
+
+function colorWithOpacity(color: string, opacity: number): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
 /* ── Component ───────────────────────────────────────────── */
@@ -463,9 +492,21 @@ export default function ListScreen({ editMode }: Props) {
               : `${songs.length} chanson${songs.length !== 1 ? "s" : ""}`}
           </Sub>
         </HeaderText>
-        {editMode && !isAll && (
-          <AddButton onClick={openPicker}>+ Ajouter</AddButton>
-        )}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.4rem",
+            alignItems: "flex-end",
+          }}
+        >
+          <ExportButton onClick={() => exportPlaylistToPdf(list, songs)}>
+            ↓ PDF
+          </ExportButton>
+          {editMode && !isAll && (
+            <AddButton onClick={openPicker}>+ Ajouter</AddButton>
+          )}
+        </div>
       </HeaderRow>
 
       {loading ? (
