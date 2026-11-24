@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -47,6 +47,8 @@ import { exportPlaylistToPdf } from "../services/pdf";
 interface Props {
   editMode: boolean;
 }
+
+const listScrollPositions = new Map<string, number>();
 
 /* ── Styles ─────────────────────────────────────────────── */
 const HeaderRow = styled.div`
@@ -199,6 +201,23 @@ const ListNotes = styled.div`
   /* border: 1px solid green; */
 `;
 
+const CapoBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid ${tokens.gold}88;
+  border-radius: 999px;
+  background: ${tokens.goldFaint};
+  color: ${tokens.gold};
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-shadow: 0 0 8px ${tokens.goldGlow};
+`;
+
 const Chevron = styled.i`
   color: ${tokens.textFaint} !important;
   font-size: 0.65rem !important;
@@ -343,6 +362,11 @@ function SortableItem({
             {song.artist && <Artist>{song.artist}</Artist>}
           </Info>
           {song.notes && <ListNotes>{song.notes}</ListNotes>}
+          {song.capo_fret != null && (
+            <CapoBadge aria-label={`Capodastre à la frette ${song.capo_fret}`}>
+              C{song.capo_fret}
+            </CapoBadge>
+          )}
 
           {/* {song.color && <ColorDot $color={song.color} />} */}
           {editMode ? (
@@ -374,6 +398,7 @@ export default function ListScreen({ editMode }: Props) {
   const [songs, setSongs] = useState<ListSong[]>([]);
   const [list, setList] = useState<List | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedListId, setLoadedListId] = useState<string | undefined>();
 
   // Picker
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -399,10 +424,23 @@ export default function ListScreen({ editMode }: Props) {
         setSongs(songsData);
         setList(listsData.find((l) => l.id === numericListId) ?? null);
       }
+      setLoadedListId(listId);
       setLoading(false);
     }
     load();
   }, [listId]);
+
+  useLayoutEffect(() => {
+    if (loading || loadedListId !== listId || listId === undefined) return;
+    const scrollY = listScrollPositions.get(listId);
+    if (scrollY !== undefined) window.scrollTo(0, scrollY);
+  }, [listId, loadedListId, loading]);
+
+  function saveScrollPosition() {
+    if (listId !== undefined) {
+      listScrollPositions.set(listId, window.scrollY);
+    }
+  }
 
   /* DnD sensors — seuil de 8px pour ne pas bloquer le scroll */
   const sensors = useSensors(
@@ -479,7 +517,12 @@ export default function ListScreen({ editMode }: Props) {
 
   return (
     <ScreenRoot>
-      <BackButton onClick={() => navigate("/")}>
+      <BackButton
+        onClick={() => {
+          saveScrollPosition();
+          navigate("/");
+        }}
+      >
         <i className="pi pi-arrow-left" /> Playlists
       </BackButton>
 
@@ -540,7 +583,10 @@ export default function ListScreen({ editMode }: Props) {
                   editMode={editMode && !isAll}
                   accent={accent}
                   onRemove={handleRemove}
-                  onNavigate={(id) => navigate(`/list/${listId}/song/${id}`)}
+                  onNavigate={(id) => {
+                    saveScrollPosition();
+                    navigate(`/list/${listId}/song/${id}`);
+                  }}
                 />
               ))}
             </SongList>
