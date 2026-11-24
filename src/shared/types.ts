@@ -12,6 +12,7 @@ export type Song = {
   yt_url?: string;
   lyrics?: string;
   notes?: string;
+  capo_fret?: number | null;
 };
 
 export type ListSong = Song & {

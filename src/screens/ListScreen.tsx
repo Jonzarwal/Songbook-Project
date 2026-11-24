@@ -201,6 +201,23 @@ const ListNotes = styled.div`
   /* border: 1px solid green; */
 `;
 
+const CapoBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid ${tokens.gold}88;
+  border-radius: 999px;
+  background: ${tokens.goldFaint};
+  color: ${tokens.gold};
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-shadow: 0 0 8px ${tokens.goldGlow};
+`;
+
 const Chevron = styled.i`
   color: ${tokens.textFaint} !important;
   font-size: 0.65rem !important;
@@ -345,6 +362,11 @@ function SortableItem({
             {song.artist && <Artist>{song.artist}</Artist>}
           </Info>
           {song.notes && <ListNotes>{song.notes}</ListNotes>}
+          {song.capo_fret != null && (
+            <CapoBadge aria-label={`Capodastre à la frette ${song.capo_fret}`}>
+              C{song.capo_fret}
+            </CapoBadge>
+          )}
 
           {/* {song.color && <ColorDot $color={song.color} />} */}
           {editMode ? (
