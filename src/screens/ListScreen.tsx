@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -47,6 +47,8 @@ import { exportPlaylistToPdf } from "../services/pdf";
 interface Props {
   editMode: boolean;
 }
+
+const listScrollPositions = new Map<string, number>();
 
 /* ── Styles ─────────────────────────────────────────────── */
 const HeaderRow = styled.div`
@@ -374,6 +376,7 @@ export default function ListScreen({ editMode }: Props) {
   const [songs, setSongs] = useState<ListSong[]>([]);
   const [list, setList] = useState<List | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedListId, setLoadedListId] = useState<string | undefined>();
 
   // Picker
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -399,10 +402,23 @@ export default function ListScreen({ editMode }: Props) {
         setSongs(songsData);
         setList(listsData.find((l) => l.id === numericListId) ?? null);
       }
+      setLoadedListId(listId);
       setLoading(false);
     }
     load();
   }, [listId]);
+
+  useLayoutEffect(() => {
+    if (loading || loadedListId !== listId || listId === undefined) return;
+    const scrollY = listScrollPositions.get(listId);
+    if (scrollY !== undefined) window.scrollTo(0, scrollY);
+  }, [listId, loadedListId, loading]);
+
+  function saveScrollPosition() {
+    if (listId !== undefined) {
+      listScrollPositions.set(listId, window.scrollY);
+    }
+  }
 
   /* DnD sensors — seuil de 8px pour ne pas bloquer le scroll */
   const sensors = useSensors(
@@ -479,7 +495,12 @@ export default function ListScreen({ editMode }: Props) {
 
   return (
     <ScreenRoot>
-      <BackButton onClick={() => navigate("/")}>
+      <BackButton
+        onClick={() => {
+          saveScrollPosition();
+          navigate("/");
+        }}
+      >
         <i className="pi pi-arrow-left" /> Playlists
       </BackButton>
 
@@ -540,7 +561,10 @@ export default function ListScreen({ editMode }: Props) {
                   editMode={editMode && !isAll}
                   accent={accent}
                   onRemove={handleRemove}
-                  onNavigate={(id) => navigate(`/list/${listId}/song/${id}`)}
+                  onNavigate={(id) => {
+                    saveScrollPosition();
+                    navigate(`/list/${listId}/song/${id}`);
+                  }}
                 />
               ))}
             </SongList>
